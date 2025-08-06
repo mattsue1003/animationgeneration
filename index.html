@@ -277,12 +277,33 @@
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
         }
 
-        .image-section, .text-section {
-            flex: 1;
+        /* Safari 特殊支援 */
+        @supports (-webkit-appearance: none) {
+            .slide-text {
+                -webkit-hyphens: auto;
+                -webkit-line-break: after-white-space;
+            }
+        }
+
+        /* Chrome 和其他 Webkit 瀏覽器 */
+        .slide-text {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* 確保在所有瀏覽器中文字不會溢出 */
+        .content-container {
+            width: 90%;
+            height: 80%;
             display: flex;
             align-items: center;
-            justify-content: center;
-            min-height: 0; /* 允許flexbox收縮 */
+            gap: 40px;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            box-sizing: border-box;
         }
 
         .slide-image {
@@ -294,12 +315,22 @@
         }
 
         .slide-text {
-            font-size: 16em;
+            font-size: 12em;
             font-weight: bold;
             color: #333;
             text-align: center;
-            line-height: 1.2;
+            line-height: 1.1;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            hyphens: auto;
+            max-width: 100%;
+            max-height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            box-sizing: border-box;
         }
 
         .gesture-instruction {

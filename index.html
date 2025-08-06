@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>體智活動動畫產生器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', '微軟雅黑', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 10px;
+        }
+
+        /* 手機橫屏優化 */
+        @media screen and (max-width: 768px) and (orientation: landscape) {
+            body {
+                padding: 5px;
+            }
+            
+            .header {
+                padding: 15px;
+                min-height: calc(100vh - 10px);
+            }
+            
+            .header h1 {
+                font-size: 1.5em;
+                margin-bottom: 15px;
+            }
+            
+            .controls {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .control-group {
+                padding: 15px;
+            }
+            
+            .control-group h3 {
+                font-size: 1.1em;
+                margin-bottom: 10px;
+            }
+            
+            .form-row {
+                gap: 8px;
+                margin-bottom: 10px;
+            }
+            
+            input[type="file"], input[type="text"], input[type="number"], select {
+                padding: 8px;
+                font-size: 13px;
+            }
+            
+            button {
+                padding: 10px 15px;
+                font-size: 13px;
+            }
+            
+            .item-list {
+                max-height: 250px;
+            }
+            
+            .item {
+                padding: 6px;
+                margin-bottom: 6px;
+            }
+            
+            .item img {
+                width: 30px;
+                height: 30px;
+            }
+            
+            .remove-btn {
+                padding: 3px 6px;
+                font-size: 11px;
+            }
+        }
+
+        /* 一般手機直屏優化 */
+        @media screen and (max-width: 768px) and (orientation: portrait) {
+            body {
+                padding: 10px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .controls {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+        }
+
+        /* 平板橫屏優化 */
+        @media screen and (min-width: 769px) and (max-width: 1024px) and (orientation: landscape) {
+            .header {
+                max-width: 1200px;
+            }
+            
+            .controls {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            margin: 0 auto;
+            max-width: 1400px;
+            min-height: calc(100vh - 40px);
+        }
+
+        .header h1 {
+            text-align: center;
+            color: #333;
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .control-group {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .control-group h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+
+        input[type="file"], input[type="text"], input[type="number"], select {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="file"]:focus, input[type="text"]:focus, input[type="number"]:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .item-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 10px;
+        }
+
+        .item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            margin-bottom: 8px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+
+        .item img {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        .remove-btn {
+            background: #dc3545;
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+
+        .animation-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            z-index: 9999;
+        }
+
+        .animation-screen {
+            width: 100%;
+            height: 100vh;
+            position: relative;
+            display: none;
+            background: linear-gradient(135deg, #ff6b6b, #ffd93d, #6bcf7f, #4ecdc4, #45b7d1, #96ceb4);
+            background-size: 300% 300%;
+            animation: gradientShift 6s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .slide {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        .slide.active {
+            opacity: 1;
+        }
+
+        .content-container {
+            width: 90%;
+            height: 80%;
+            display: flex;
+            align-items: center;
+            gap: 40px;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .image-section, .text-section {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .slide-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .slide-text {
+            font-size: 16em;
+            font-weight: bold;
+            color: #333;
+            text-align: center;
+            line-height: 1.2;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .gesture-instruction {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 1.5em;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.05); }
+        }
+
+        .gesture-icons {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            display: flex;
+            gap: 20px;
+        }
+
+        .gesture-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            font-weight: bold;
+            color: white;
+            animation: bounce 2s infinite;
+        }
+
+        .correct { background: #28a745; }
+        .incorrect { background: #dc3545; }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        .start-screen {
+            text-align: center;
+            color: white;
+            padding: 50px;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .start-screen h2 {
+            font-size: 4em;
+            margin-bottom: 40px;
+            animation: fadeInUp 1s ease;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+        }
+
+        .start-screen p {
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            animation: fadeInUp 1s 0.2s both;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            line-height: 1.4;
+        }
+
+        .start-btn {
+            font-size: 2em;
+            padding: 25px 50px;
+            animation: fadeInUp 1s 0.4s both;
+            margin-top: 20px;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animation-controls {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+        }
+
+        .control-btn {
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .control-btn:hover {
+            background: rgba(0, 0, 0, 0.9);
+            transform: translateY(-2px);
+        }
+
+        .paused .slide {
+            animation-play-state: paused;
+        }
+
+        /* 動畫畫面手機適配 */
+        @media screen and (max-width: 768px) and (orientation: landscape) {
+            .start-screen h2 {
+                font-size: 2.5em;
+                margin-bottom: 20px;
+            }
+
+            .start-screen p {
+                font-size: 1.5em;
+                margin-bottom: 15px;
+            }
+
+            .start-btn {
+                font-size: 1.3em;
+                padding: 15px 30px;
+                margin-top: 10px;
+            }
+            
+            .animation-controls {
+                top: 15px;
+                left: 15px;
+                gap: 10px;
+            }
+            
+            .control-btn {
+                padding: 8px 15px;
+                font-size: 14px;
+            }
+            
+            .slide-text {
+                font-size: 10em;
+            }
+            
+            .content-container {
+                width: 95%;
+                height: 85%;
+                gap: 20px;
+                padding: 20px;
+            }
+            
+            .gesture-icons {
+                top: 15px;
+                right: 15px;
+            }
+            
+            .gesture-icon {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5em;
+            }
+            
+            .gesture-instruction {
+                bottom: 30px;
+                font-size: 1.2em;
+                padding: 10px 20px;
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header" id="header">
+        <h1>體智活動動畫產生器</h1>
+        
+        <div class="controls">
+            <div class="control-group">
+                <h3>📸 圖片管理</h3>
+                <div class="form-row">
+                    <input type="file" id="imageUpload" accept="image/*">
+                    <input type="text" id="imageText" placeholder="輸入圖片對應的文字">
+                </div>
+                <div class="form-row">
+                    <select id="layoutSelect">
+                        <option value="left">圖片在左，文字在右</option>
+                        <option value="right">圖片在右，文字在左</option>
+                    </select>
+                    <select id="matchType">
+                        <option value="correct">正確配對 ⭕</option>
+                        <option value="incorrect">錯誤配對 ❌</option>
+                    </select>
+                </div>
+                <button onclick="addItem()">➕ 新增項目</button>
+                
+                <div class="item-list" id="itemList"></div>
+            </div>
+
+            <div class="control-group">
+                <h3>⚙️ 動畫設定</h3>
+                <div class="form-row">
+                    <label>每張動畫停留時間：</label>
+                    <input type="number" id="duration" value="3" min="1" max="30">
+                    <span>秒</span>
+                </div>
+                <div class="form-row">
+                    <label>
+                        <input type="checkbox" id="showHints" checked> 
+                        顯示配對提示
+                    </label>
+                </div>
+                <div class="form-row">
+                    <label>播放順序：</label>
+                    <select id="playOrder">
+                        <option value="sequence">依序播放</option>
+                        <option value="random">隨機播放</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <button onclick="startAnimation()">🎬 開始動畫</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="animation-container">
+        <div class="animation-screen" id="animationScreen">
+            <div class="start-screen" id="startScreen">
+                <h2>🎯 體智活動遊戲</h2>
+                <p>📋 遊戲規則：</p>
+                <p>✅ 圖片與文字配對正確 → 雙手比圈圈 ⭕</p>
+                <p>❌ 圖片與文字配對錯誤 → 雙手比叉叉 ❌</p>
+                <button class="start-btn" onclick="startSlideshow()">🚀 開始遊戲</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let items = [];
+        let currentSlide = 0;
+        let animationInterval = null;
+        let isAnimating = false;
+        let isPaused = false;
+        let playQueue = []; // 播放佇列
+
+        // 打亂陣列的函數
+        function shuffleArray(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        // 生成播放佇列
+        function generatePlayQueue() {
+            const playOrder = document.getElementById('playOrder').value;
+            
+            if (playOrder === 'random') {
+                playQueue = shuffleArray(items);
+            } else {
+                playQueue = [...items]; // 依序播放
+            }
+        }
+
+        // 本地存儲功能
+        function saveData() {
+            const data = {
+                items: items,
+                duration: document.getElementById('duration').value,
+                showHints: document.getElementById('showHints').checked,
+                playOrder: document.getElementById('playOrder').value
+            };
+            localStorage.setItem('brainBodyActivity', JSON.stringify(data));
+        }
+
+        function loadData() {
+            const saved = localStorage.getItem('brainBodyActivity');
+            if (saved) {
+                const data = JSON.parse(saved);
+                items = data.items || [];
+                document.getElementById('duration').value = data.duration || 3;
+                document.getElementById('showHints').checked = data.showHints !== false;
+                document.getElementById('playOrder').value = data.playOrder || 'sequence';
+                updateItemList();
+            }
+        }
+
+        function addItem() {
+            const imageInput = document.getElementById('imageUpload');
+            const textInput = document.getElementById('imageText');
+            const layoutSelect = document.getElementById('layoutSelect');
+            const matchTypeSelect = document.getElementById('matchType');
+
+            if (!imageInput.files[0] || !textInput.value.trim()) {
+                alert('請選擇圖片並輸入文字！');
+                return;
+            }
+
+            const file = imageInput.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const item = {
+                    id: Date.now(),
+                    image: e.target.result,
+                    text: textInput.value.trim(),
+                    layout: layoutSelect.value,
+                    matchType: matchTypeSelect.value
+                };
+                
+                items.push(item);
+                updateItemList();
+                saveData(); // 保存數據
+                
+                // 清空輸入
+                imageInput.value = '';
+                textInput.value = '';
+            };
+            
+            reader.readAsDataURL(file);
+        }
+
+        function removeItem(id) {
+            items = items.filter(item => item.id !== id);
+            updateItemList();
+            saveData(); // 保存數據
+        }
+
+        function updateItemList() {
+            const itemList = document.getElementById('itemList');
+            itemList.innerHTML = items.map(item => `
+                <div class="item">
+                    <img src="${item.image}" alt="圖片">
+                    <span>${item.text} (${item.layout === 'left' ? '圖左文右' : '圖右文左'}) ${item.matchType === 'correct' ? '⭕' : '❌'}</span>
+                    <button class="remove-btn" onclick="removeItem(${item.id})">刪除</button>
+                </div>
+            `).join('');
+        }
+
+        function startAnimation() {
+            if (items.length === 0) {
+                alert('請先新增至少一個項目！');
+                return;
+            }
+
+            // 重置狀態
+            if (animationInterval) {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+            
+            isAnimating = false;
+            isPaused = false;
+            currentSlide = 0;
+            playQueue = []; // 清空播放佇列
+
+            // 顯示動畫容器（全螢幕覆蓋）
+            const animationContainer = document.querySelector('.animation-container');
+            animationContainer.style.display = 'flex';
+            document.getElementById('animationScreen').style.display = 'block';
+            
+            // 確保開始螢幕顯示
+            const startScreen = document.getElementById('startScreen');
+            if (startScreen) {
+                startScreen.style.display = 'flex';
+            }
+        }
+
+        function startSlideshow() {
+            const startScreen = document.getElementById('startScreen');
+            if (startScreen) {
+                startScreen.style.display = 'none';
+            }
+            
+            // 檢查是否有項目可以播放
+            if (!items || items.length === 0) {
+                alert('沒有可播放的項目！請先新增內容。');
+                stopAnimation();
+                return;
+            }
+            
+            // 生成播放佇列
+            generatePlayQueue();
+            
+            isAnimating = true;
+            isPaused = false;
+            currentSlide = 0;
+            
+            // 清除可能存在的舊計時器
+            if (animationInterval) {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+            
+            showSlide();
+            
+            const duration = parseInt(document.getElementById('duration').value) * 1000;
+            animationInterval = setInterval(() => {
+                if (!isPaused && playQueue && playQueue.length > 0) {
+                    currentSlide = (currentSlide + 1) % playQueue.length;
+                    showSlide();
+                }
+            }, duration);
+        }
+
+        function pauseAnimation() {
+            isPaused = true;
+            document.getElementById('animationScreen').classList.add('paused');
+        }
+
+        function resumeAnimation() {
+            isPaused = false;
+            document.getElementById('animationScreen').classList.remove('paused');
+        }
+
+        function togglePause() {
+            if (isPaused) {
+                resumeAnimation();
+            } else {
+                pauseAnimation();
+            }
+        }
+
+        function showSlide() {
+            const screen = document.getElementById('animationScreen');
+            if (!screen || !playQueue[currentSlide]) {
+                console.error('動畫螢幕或項目不存在');
+                return;
+            }
+            
+            const item = playQueue[currentSlide]; // 使用播放佇列中的項目
+            const showHintsElement = document.getElementById('showHints');
+            const showHints = showHintsElement ? showHintsElement.checked : true;
+            
+            const gestureText = item.matchType === 'correct' ? '圖文配對正確！雙手比圈圈 ⭕' : '圖文配對錯誤！雙手比叉叉 ❌';
+            const gestureIcon = item.matchType === 'correct' ? '⭕' : '❌';
+            const gestureClass = item.matchType === 'correct' ? 'correct' : 'incorrect';
+            
+            try {
+                const slideHTML = `
+                    <div class="animation-controls">
+                        <button class="control-btn" onclick="togglePause()">⏯️ ${isPaused ? '繼續' : '暫停'}</button>
+                        <button class="control-btn" onclick="stopAnimation()">⏹️ 結束</button>
+                    </div>
+                    <div class="slide active">
+                        <div class="content-container">
+                            <div class="${item.layout === 'left' ? 'image-section' : 'text-section'}">
+                                ${item.layout === 'left' ? 
+                                    `<img src="${item.image}" alt="圖片" class="slide-image">` : 
+                                    `<div class="slide-text">${item.text}</div>`
+                                }
+                            </div>
+                            <div class="${item.layout === 'left' ? 'text-section' : 'image-section'}">
+                                ${item.layout === 'left' ? 
+                                    `<div class="slide-text">${item.text}</div>` : 
+                                    `<img src="${item.image}" alt="圖片" class="slide-image">`
+                                }
+                            </div>
+                        </div>
+                        ${showHints ? `
+                            <div class="gesture-icons">
+                                <div class="gesture-icon ${gestureClass}">
+                                    ${gestureIcon}
+                                </div>
+                            </div>
+                            <div class="gesture-instruction">
+                                ${gestureText}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+                
+                screen.innerHTML = slideHTML;
+            } catch (error) {
+                console.error('顯示幻燈片時發生錯誤:', error);
+            }
+        }
+
+        function stopAnimation() {
+            if (animationInterval) {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+            
+            // 隱藏動畫容器
+            const animationContainer = document.querySelector('.animation-container');
+            animationContainer.style.display = 'none';
+            document.getElementById('animationScreen').style.display = 'none';
+            document.getElementById('animationScreen').classList.remove('paused');
+            
+            // 清空動畫螢幕內容，避免殘留
+            document.getElementById('animationScreen').innerHTML = `
+                <div class="start-screen" id="startScreen">
+                    <h2>體智活動遊戲</h2>
+                    <p>📋 遊戲規則：</p>
+                    <p>圖片與文字配對正確 → 雙手比圈圈 ⭕</p>
+                    <p>圖片與文字配對錯誤 → 雙手比叉叉 ❌</p>
+                    <button class="start-btn" onclick="startSlideshow()">🚀 開始遊戲</button>
+                </div>
+            `;
+            
+            isAnimating = false;
+            isPaused = false;
+            currentSlide = 0;
+        }
+
+        // 鍵盤快捷鍵
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && isAnimating) {
+                stopAnimation();
+            }
+            if (e.key === ' ' && isAnimating) {
+                e.preventDefault();
+                togglePause();
+            }
+        });
+
+        // 保存設定當值改變時
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData(); // 載入保存的數據
+        });
+        
+        // 頁面載入完成後綁定事件
+        window.addEventListener('load', function() {
+            const durationInput = document.getElementById('duration');
+            const showHintsInput = document.getElementById('showHints');
+            const playOrderInput = document.getElementById('playOrder');
+            
+            if (durationInput) {
+                durationInput.addEventListener('change', saveData);
+            }
+            if (showHintsInput) {
+                showHintsInput.addEventListener('change', saveData);
+            }
+            if (playOrderInput) {
+                playOrderInput.addEventListener('change', saveData);
+            }
+        });
+    </script>
+</body>
+</html>
